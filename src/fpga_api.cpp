@@ -117,22 +117,18 @@ void FPGA::largeMV(const float* large_mat, const float* input, float* output, in
       int block_row = min(m_size_, num_output-i);
       int block_col = min(v_size_, num_input-j);
 
+      int col_pad = (block_col == v_size_) ? 0 : (v_size_ - block_col);
+      int row_pad = (block_row == m_size_)  ? 0 : (m_size_ - block_row);
+
       // 1) Assign a vector
       memcpy(vec, input + j, sizeof(float) * block_col);
       // 2) Assign a matrix
-      int k=0;
-      for(; k< block_row ; k++)
-      {
-            memcpy(mat+ v_size_* k, large_mat + (i+k) * num_input + j, sizeof(float) * block_col);
-            if(block_col < v_size_) memset(mat+ v_size_ * k + block_col, 0, sizeof(float) * (v_size_ - block_col));
-        }
-        if(k < m_size_)
-        {
-            for(int x = 0; x < m_size_ - k ; x++)
-            {
-                memset(mat+ v_size_ * ( k + x ), 0, sizeof(float) * v_size_);
-            }
-      }
+      for (int row = 0; row < block_row; row++){
+          memcpy(mat + (row * v_size_), large_mat + ((i + row) * num_input)+j, sizeof(float) * block_col);
+          if (col_pad != 0) memset(mat + ((row *v_size_) + block_col), 0, sizeof(float) * col_pad);
+          }
+      if (row_pad != 0) memset(mat + (block_row * v_size_), 0, sizeof(float) * v_size_ * row_pad);
+
       // 3) Call a function `blockMV() to execute MV multiplication
       const float* ret = this->blockMV();
 
