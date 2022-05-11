@@ -161,21 +161,21 @@ void FPGA::largeMM(const float* weight_mat, const float* input_mat, float* outpu
 
         // 1) Assign a m1
         // IMPLEMENT THIS
-        int i1, j1, k1;
-        for (i1=0;i1<block_row;i1++){
-					for (j1=0;j1<block_col_1;j1++) m1[i1 * v_size_ + j1] = weight_mat[(i+i1) * (num_input) + (j+j1)];
-					for (;j1<v_size_;j1++) m1[i1 * v_size_ + j1] = 0;
+        int l, m, v;
+        for (l=0;l<block_row;l++){
+					for (m=0;m<block_col_1;m++) m1[l * v_size_ + m] = weight_mat[(i+l) * (num_input) + (j+m)];
+					for (;m<v_size_;m++) m1[l * v_size_ + m] = 0;
 				}
-				for (;i1<v_size_;i1++) for (j1=0;j1<v_size_;j1++)
-					m1[i1 * v_size_ + j1] = 0;
+				for (;l<v_size_;l++) for (m=0;m<v_size_;m++)
+					m1[l * v_size_ + m] = 0;
         // 2) Assign a m2
         // IMPLEMENT THIS
-        for (j1=0;j1<block_col_1;j1++){
-					for (k1=0;k1<block_col_2;k1++) m2[j1 * v_size_ + k1] = input_mat[(j+j1) * (num_matrix2) + (k+k1)];
-					for (;k1<v_size_;k1++) m2[j1 * v_size_ + k1] = 0;
+        for (m=0;m<block_col_1;m++){
+					for (v=0;v<block_col_2;v++) m2[m * v_size_ + v] = input_mat[(j+m) * (num_matrix2) + (k+v)];
+					for (;v<v_size_;v++) m2[m * v_size_ + v] = 0;
 				}
-				for (;j1<v_size_;j1++) for (k1=0;k1<v_size_;k1++)
-					m2[j1 * v_size_ + k1] = 0;
+				for (;m<v_size_;m++) for (v=0;v<v_size_;v++)
+					m2[m * v_size_ + v] = 0;
         // 3) Call a function `blockMM() to execute Matrix matrix multiplication
         const float* ret = this->blockMM();
 
@@ -219,20 +219,19 @@ void FPGA::convLowering(const std::vector<std::vector<std::vector<std::vector<fl
   // For example,
   // new_weights[0][0] = cnn_weights[0][0][0][0];
   // new_inputs[0][0] = inputs[0][0][0];
-  int ic,cc,i,j,i2,j2;
-	for (ic=0;ic<input_channel;ic++){
+  int col,c_col,i,j,x,y;
+	for (col=0;col<input_channel;col++){
 		for (i=0;i<input_height - conv_height + 1;i++) for (j=0;j<input_width - conv_width + 1;j++){
-			for (i2=0;i2<conv_height;i2++) for (j2=0;j2<conv_width;j2++){
-				new_inputs[ic * (conv_height * conv_width) + i2 * (conv_width) + j2][i * (input_width - conv_width + 1) + j] = inputs[ic][i+i2][j+j2];
+			for (x=0;x<conv_height;x++) for (y=0;y<conv_width;y++){
+				new_inputs[col * (conv_height * conv_width) + x * (conv_width) + y][i * (input_width - conv_width + 1) + j] = inputs[col][i+x][j+y];
 			}
 		}
 	}
 
-
-  for (cc=0;cc<conv_channel;cc++){
-		for (ic=0;ic<input_channel;ic++){
+  for (c_col=0;c_col<conv_channel;c_col++){
+		for (col=0;col<input_channel;col++){
 			for (i=0;i<conv_height;i++) for (j=0;j<conv_width;j++){
-				new_weights[cc][ic * (conv_height * conv_width) + (i * conv_width + j)] = cnn_weights[cc][ic][i][j];
+				new_weights[c_col][col * (conv_height * conv_width) + (i * conv_width + j)] = cnn_weights[c_col][col][i][j];
 			}
 		}
 	}
